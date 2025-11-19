@@ -6,9 +6,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
-mlflow.autolog()
 import dagshub
 dagshub.init(repo_owner='aprotiim', repo_name='Dagshub_mlflow', mlflow=True)
+mlflow.autolog()
 
 mlflow.set_tracking_uri("https://dagshub.com/aprotiim/Dagshub_mlflow.mlflow")
 
@@ -21,7 +21,7 @@ y = iris.target
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 # Define the parameters for the Random Forest model
-max_depth = 10
+max_depth = 8
 
 # apply mlflow
 
@@ -35,11 +35,18 @@ with mlflow.start_run():
 
     y_pred = dt.predict(X_test)
 
-    accuracy = accuracy_score(y_test, y_pred)
+    # Log training dataset as artifact
+    import pandas as pd
+    train_data = pd.DataFrame(X_train, columns=iris.feature_names)
+    train_data['target'] = y_train
+    train_data.to_csv("train_dataset.csv", index=False)
+    mlflow.log_artifact("train_dataset.csv")
 
-    #mlflow.log_metric('accuracy', accuracy)
-
-    #mlflow.log_param('max_depth', max_depth)
+    # Log test dataset as artifact
+    test_data = pd.DataFrame(X_test, columns=iris.feature_names)
+    test_data['target'] = y_test
+    test_data.to_csv("test_dataset.csv", index=False)
+    mlflow.log_artifact("test_dataset.csv")
 
     # Create a confusion matrix plot
     cm = confusion_matrix(y_test, y_pred)
@@ -53,7 +60,7 @@ with mlflow.start_run():
     plt.savefig("confusion_matrix.png")
 
     # mlflow code
-    #mlflow.log_artifact("confusion_matrix.png")
+    mlflow.log_artifact("confusion_matrix.png")
 
     mlflow.log_artifact(__file__)
 
@@ -62,6 +69,6 @@ with mlflow.start_run():
     mlflow.set_tag('author','Aprotiim')
     mlflow.set_tag('model','decision tree')
 
-    print('accuracy', accuracy)
+    print('Model trained and logged successfully')
 
 
